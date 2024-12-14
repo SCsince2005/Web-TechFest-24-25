@@ -1,38 +1,93 @@
-import React from 'react'
 
-export default function MovieList() {
-    const movies = [
-        {
-          id: 1,
-          name: "Inception",
-          rating: 8.8,
-          image: "/images/Inception.png",
-          genres:["Action","Drama"],
-        },
-        {
-          id: 2,
-          name: "The Dark Knight",
-          rating: 9.0,
-          image: "/images/Dark.png",
-          genres:["Action","Drama"],
-        },
-        {
-          id: 3,
-          name: "Interstellar",
-          rating: 8.6,
-          image: "/images/Interstellar.png",
-          genres:["Action","Drama"],
-        },
-        {
-          id: 4,
-          name: "Titanic",
-          rating: 7.8,
-          image: "/images/titanic.png",
-          genres:["Action","Drama"],
-        },
-      ];
-  return (
-    <div className="p-6 text-white min-h-screen mt-10">
+import React, { useState, useEffect } from 'react';
+
+// MovieList component: Fetches and displays a list of popular movies
+export default function MovieList({addToCart}) {
+    // State management hooks
+    // movies: Stores the list of fetched movies
+    // isLoading: Tracks the loading state of movie fetching
+    // error: Stores any error that occurs during fetching
+    const [movies, setMovies] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // useEffect hook to fetch movies when the component mounts
+    useEffect(() => {
+        // Async function to fetch movies from IMDb API
+        const fetchMovies = async () => {
+            try {
+                // API call to fetch popular movies
+                // Uses RapidAPI to get movie data
+                const response = await fetch('https://imdb8.p.rapidapi.com/title/v2/get-popular?first=20&country=US&language=en-US', {
+                    method: 'GET',
+                    headers: {
+                        // API key and host for authentication
+                        'x-rapidapi-key': '0176cef2bcmsh87a7de68de66d51p1e03e1jsnba19cbc9b4d6',
+                        'x-rapidapi-host': 'imdb8.p.rapidapi.com'
+                    }
+                });
+                
+                // Throw an error if the response is not OK
+                if (!response.ok) {
+                    throw new Error('Failed to fetch movies');
+                }
+                
+                // Parse the JSON response
+                const data = await response.json();
+                
+                // Transform the raw API data into a more usable format
+                const transformedMovies = data.data.movies.edges.map((edge, index) => ({
+                  // Generate a unique ID, using the API ID or creating one
+                  id: edge.node.id || `movie-${index}`,
+                  // Extract movie title, using 'Unknown Title' as a fallback
+                  name: edge.node.titleText?.text || 'Unknown Title',
+                  // Extract movie rating, default to 0 if not available
+                  rating: edge.node.ratingsSummary?.aggregateRating || 0,
+                  // Extract movie image URL, use a default image if not available
+                  image: edge.node.primaryImage?.url || '/images/Dark.png',
+                  // Extract up to 4 genres, or use an empty array
+                  genres: edge.node.titleGenres?.genres 
+                      ? edge.node.titleGenres.genres.slice(0, 4).map(g => g.genre.text) 
+                      : []
+                }));
+
+                // Update state with transformed movies
+                setMovies(transformedMovies);
+                // Set loading to false once movies are fetched
+                setIsLoading(false);
+            } catch (err) {
+                // Handle any errors during fetching
+                setError(err.message);
+                // Ensure loading is set to false even if an error occurs
+                setIsLoading(false);
+            }
+        };
+
+        // Call the fetch function
+        fetchMovies();
+    }, []); // Empty dependency array means this effect runs once on mount
+
+    // Render loading state if movies are being fetched
+    if (isLoading) {
+        return (
+            <div className="p-6 text-white min-h-screen mt-10 text-center">
+                <h1 className="text-3xl font-bold">Loading Movies...</h1>
+            </div>
+        );
+    }
+
+    // Render error state if there was a problem fetching movies
+    if (error) {
+        return (
+            <div className="p-6 text-white min-h-screen mt-10 text-center">
+                <h1 className="text-3xl font-bold text-red-500">Error: {error}</h1>
+            </div>
+        );
+    }
+  
+    // Render the list of movies
+    return (
+      <div className="p-6 text-white min-h-screen mt-10">
         <h1 className="text-3xl font-bold text-center mb-6">Popular Movies</h1>
         {/* Responsive grid layout for movie cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -87,5 +142,5 @@ export default function MovieList() {
           ))}
         </div>
       </div>
-  )
-}
+    );
+  }
