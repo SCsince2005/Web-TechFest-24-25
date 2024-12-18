@@ -22,7 +22,7 @@ export default function MovieList({addToCart}) {
                     method: 'GET',
                     headers: {
                         // API key and host for authentication
-                        'x-rapidapi-key': '0176cef2bcmsh87a7de68de66d51p1e03e1jsnba19cbc9b4d6',
+                        'x-rapidapi-key': '57822768f4msh81e9e6c48520958p1c563bjsn1e8e48435575',
                         'x-rapidapi-host': 'imdb8.p.rapidapi.com'
                     }
                 });
